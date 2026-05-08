@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER MEMORY - 神経衰弱</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050510;
+            --panel-bg: rgba(20, 20, 35, 0.6);
+            --card-back: linear-gradient(135deg, #1e1e38 0%, #0f0f1a 100%);
+            --neon-primary: #00f0ff;
+            --neon-secondary: #ff003c;
+            --neon-success: #39ff14;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(255, 0, 60, 0.15), transparent 25%);
+            color: #fff;
+            font-family: 'Noto Sans JP', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, .cyber-font {
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 2px;
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* --- 3D Card Flip Styles --- */
+        .card-container {
+            perspective: 1000px;
+            cursor: pointer;
+            aspect-ratio: 3 / 4;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: 12px;
+        }
+
+        .card-container.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-container.matched .card-inner {
+            transform: rotateY(180deg) scale(0.95);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+
+        /* The side facing the user initially (Back of the card visually) */
+        .card-front {
+            background: var(--card-back);
+            border: 2px solid rgba(0, 240, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .card-front::after {
+            content: '';
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 8px);
+            border-radius: 4px;
+        }
+
+        .card-container:hover .card-front {
+            border-color: var(--neon-primary);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+
+        /* The side with the icon (Front of the card visually) */
+        .card-back {
+            background: #111;
+            transform: rotateY(180deg);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-container.matched .card-back {
+            border-color: var(--neon-success);
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+            animation: pulse-success 2s infinite;
+        }
+
+        /* --- SVG Icon Colors --- */
+        .icon-shape { width: 60%; height: 60%; drop-shadow: 0 0 10px currentColor; }
+        .color-1 { color: #00f0ff; } /* Cyan */
+        .color-2 { color: #ff003c; } /* Red */
+        .color-3 { color: #bc13fe; } /* Purple */
+        .color-4 { color: #39ff14; } /* Green */
+        .color-5 { color: #ffea00; } /* Yellow */
+        .color-6 { color: #ff6600; } /* Orange */
+        .color-7 { color: #0044ff; } /* Blue */
+        .color-8 { color: #ff00ff; } /* Magenta */
+
+        /* --- Animations --- */
+        @keyframes pulse-success {
+            0% { box-shadow: 0 0 15px rgba(57, 255, 20, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(57, 255, 20, 0.8); }
+            100% { box-shadow: 0 0 15px rgba(57, 255, 20, 0.4); }
+        }
+
+        .text-glow-primary { text-shadow: 0 0 10px var(--neon-primary), 0 0 20px var(--neon-primary); color: #fff; }
+        .text-glow-secondary { text-shadow: 0 0 10px var(--neon-secondary); }
+
+        .btn-cyber {
+            background: transparent;
+            color: var(--neon-primary);
+            border: 1px solid var(--neon-primary);
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            transition: 0.2s;
+            box-shadow: 0 0 10px inset rgba(0, 240, 255, 0.2);
+        }
+        .btn-cyber:hover {
+            background: var(--neon-primary);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-primary);
+        }
+
+        /* Modal specific */
+        #victory-modal {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center">
+
+    <div class="max-w-4xl w-full glass-panel rounded-2xl p-6 md:p-10 relative z-10">
+        
+        <!-- Header / Stats -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-gray-700 pb-4">
+            <h1 class="text-3xl md:text-5xl font-black cyber-font text-glow-primary tracking-wider">
+                CYBER<span class="text-white text-shadow-none">MATCH</span>
+            </h1>
+            
+            <div class="flex gap-6 cyber-font text-lg md:text-xl">
+                <div class="flex flex-col items-center">
+                    <span class="text-gray-400 text-xs tracking-widest mb-1">MOVES</span>
+                    <span id="moves-count" class="font-bold text-2xl text-cyan-400">0</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <span class="text-gray-400 text-xs tracking-widest mb-1">TIME</span>
+                    <span id="time-count" class="font-bold text-2xl text-cyan-400">00:00</span>
+                </div>
+                <div class="flex items-center ml-2">
+                    <button onclick="initGame()" class="btn-cyber px-4 py-2 rounded font-bold text-sm cyber-font">
+                        REBOOT
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Game Board -->
+        <main>
+            <div id="game-board" class="grid grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+                <!-- Cards will be injected here by JavaScript -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-500">
+        <div class="glass-panel border-cyan-400 border-2 rounded-xl p-8 max-w-md w-[90%] text-center transform scale-90 transition-transform duration-500" id="victory-content">
+            <h2 class="text-4xl cyber-font text-glow-primary mb-2">SYSTEM CLEARED</h2>
+            <p class="text-gray-300 mb-8 tracking-wider">All datablocks synchronized.</p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-8 text-left glass-panel p-4 rounded-lg">
+                <div>
+                    <span class="block text-xs text-gray-400 cyber-font">FINAL TIME</span>
+                    <span id="final-time" class="text-2xl font-bold cyber-font text-cyan-400">00:00</span>
+                </div>
+                <div>
+                    <span class="block text-xs text-gray-400 cyber-font">TOTAL MOVES</span>
+                    <span id="final-moves" class="text-2xl font-bold cyber-font text-cyan-400">0</span>
+                </div>
+            </div>
+
+            <button onclick="initGame()" class="btn-cyber w-full py-4 rounded-lg font-bold text-xl cyber-font tracking-widest">
+                INITIALIZE NEW RUN
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Game Data (SVG Shapes for high-tech look) ---
+        const icons = [
+            { id: 1, colorClass: 'color-1', svg: '<polygon points="50,15 90,85 10,85" fill="none" stroke="currentColor" stroke-width="8"/>' }, // Triangle
+            { id: 2, colorClass: 'color-2', svg: '<circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" stroke-width="8"/>' }, // Circle
+            { id: 3, colorClass: 'color-3', svg: '<rect x="20" y="20" width="60" height="60" fill="none" stroke="currentColor" stroke-width="8"/>' }, // Square
+            { id: 4, colorClass: 'color-4', svg: '<polygon points="50,10 85,30 85,70 50,90 15,70 15,30" fill="none" stroke="currentColor" stroke-width="8"/>' }, // Hexagon
+            { id: 5, colorClass: 'color-5', svg: '<path d="M20,20 L80,80 M80,20 L20,80" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>' }, // Cross
+            { id: 6, colorClass: 'color-6', svg: '<polygon points="50,10 90,50 50,90 10,50" fill="none" stroke="currentColor" stroke-width="8"/>' }, // Diamond
+            { id: 7, colorClass: 'color-7', svg: '<polygon points="50,10 61,39 92,39 67,58 76,89 50,71 24,89 33,58 8,39 39,39" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>' }, // Star
+            { id: 8, colorClass: 'color-8', svg: '<path d="M70,20 A40,40 0 1,0 80,80 A30,30 0 1,1 70,20" fill="none" stroke="currentColor" stroke-width="6"/>' } // Moon
+        ];
+
+        // --- State Variables ---
+        let deck = [];
+        let firstCard = null;
+        let secondCard = null;
+        let lockBoard = false;
+        let matchedPairs = 0;
+        let moves = 0;
+        
+        let timerInterval = null;
+        let secondsPassed = 0;
+        let gameStarted = false;
+
+        // --- DOM Elements ---
+        const boardElement = document.getElementById('game-board');
+        const movesElement = document.getElementById('moves-count');
+        const timeElement = document.getElementById('time-count');
+        const victoryModal = document.getElementById('victory-modal');
+        const victoryContent = document.getElementById('victory-content');
+
+        // --- Core Functions ---
+
+        function initGame() {
+            // Reset state
+            clearInterval(timerInterval);
+            secondsPassed = 0;
+            moves = 0;
+            matchedPairs = 0;
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+            gameStarted = false;
+            
+            updateStats();
+            hideVictory();
+
+            // Create Deck (Duplicate icons and shuffle)
+            deck = [...icons, ...icons];
+            deck.sort(() => Math.random() - 0.5);
+
+            // Render Board
+            boardElement.innerHTML = '';
+            deck.forEach((cardData, index) => {
+                const card = document.createElement('div');
+                card.classList.add('card-container');
+                card.dataset.id = cardData.id;
+                card.dataset.index = index;
+
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front"></div>
+                        <div class="card-back">
+                            <svg class="icon-shape ${cardData.colorClass}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                ${cardData.svg}
+                            </svg>
+                        </div>
+                    </div>
+                `;
+
+                card.addEventListener('click', flipCard);
+                boardElement.appendChild(card);
+            });
+        }
+
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === firstCard) return; // Prevent double clicking same card
+
+            if (!gameStarted) {
+                startTimer();
+                gameStarted = true;
+            }
+
+            this.classList.add('flipped');
+
+            if (!firstCard) {
+                // First click
+                firstCard = this;
+                return;
+            }
+
+            // Second click
+            secondCard = this;
+            moves++;
+            updateStats();
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            const isMatch = firstCard.dataset.id === secondCard.dataset.id;
+            isMatch ? disableCards() : unflipCards();
+        }
+
+        function disableCards() {
+            // Match found!
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+            
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+
+            matchedPairs++;
+            resetBoard();
+
+            if (matchedPairs === icons.length) {
+                setTimeout(showVictory, 500);
+            }
+        }
+
+        function unflipCards() {
+            // No match
+            lockBoard = true;
+            
+            // Highlight error visually briefly
+            firstCard.querySelector('.card-back').style.borderColor = 'var(--neon-secondary)';
+            secondCard.querySelector('.card-back').style.borderColor = 'var(--neon-secondary)';
+
+            setTimeout(() => {
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                
+                // Reset border colors
+                firstCard.querySelector('.card-back').style.borderColor = '';
+                secondCard.querySelector('.card-back').style.borderColor = '';
+                
+                resetBoard();
+            }, 1000);
+        }
+
+        function resetBoard() {
+            [firstCard, secondCard, lockBoard] = [null, null, false];
+        }
+
+        // --- Timer & UI ---
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                secondsPassed++;
+                updateStats();
+            }, 1000);
+        }
+
+        function formatTime(totalSeconds) {
+            const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const s = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function updateStats() {
+            movesElement.textContent = moves;
+            timeElement.textContent = formatTime(secondsPassed);
+        }
+
+        function showVictory() {
+            clearInterval(timerInterval);
+            document.getElementById('final-time').textContent = formatTime(secondsPassed);
+            document.getElementById('final-moves').textContent = moves;
+            
+            victoryModal.classList.remove('hidden');
+            // Small delay to allow display:flex to apply before animating opacity
+            setTimeout(() => {
+                victoryModal.classList.remove('opacity-0');
+                victoryModal.classList.add('opacity-100');
+                victoryContent.classList.remove('scale-90');
+                victoryContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function hideVictory() {
+            victoryModal.classList.remove('opacity-100');
+            victoryModal.classList.add('opacity-0');
+            victoryContent.classList.remove('scale-100');
+            victoryContent.classList.add('scale-90');
+            
+            setTimeout(() => {
+                victoryModal.classList.add('hidden');
+            }, 500); // match transition duration
+        }
+
+        // Start game on load
+        window.addEventListener('DOMContentLoaded', initGame);
+
+    </script>
+</body>
+</html>
